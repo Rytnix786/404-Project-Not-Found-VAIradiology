@@ -13,8 +13,13 @@ export function setCookie(name: string, value: string, days?: number): void {
     expires = "; expires=" + date.toUTCString();
   }
   
-  // Set cookie with Secure and SameSite flags
-  document.cookie = `${name}=${encodeURIComponent(value || "")}${expires}; path=/; SameSite=Lax; Secure`;
+  // BUG-012 fix: Secure flag must not be set on http:// (localhost).
+  // Browsers silently discard Secure cookies on non-HTTPS origins, making login
+  // appear to fail even when the backend returns 200 OK with a valid token.
+  const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  const secureFlag = isSecure ? '; Secure' : '';
+  
+  document.cookie = `${name}=${encodeURIComponent(value || "")}${expires}; path=/; SameSite=Lax${secureFlag}`;
 }
 
 export function getCookie(name: string): string | null {
@@ -37,5 +42,7 @@ export function getCookie(name: string): string | null {
 
 export function eraseCookie(name: string): void {
   if (typeof window === 'undefined') return;
-  document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax; Secure`;
+  const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  const secureFlag = isSecure ? '; Secure' : '';
+  document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax${secureFlag}`;
 }

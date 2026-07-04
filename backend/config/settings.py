@@ -24,8 +24,9 @@ SECRET_KEY = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-# Read allowed hosts from environment, defaulting to local hosts
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# Read allowed hosts from environment, defaulting to local hosts and Render domain
+allowed_hosts_env = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com')
+ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_env.split(',') if h.strip()]
 
 # Application definition
 INSTALLED_APPS = [
@@ -49,6 +50,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # WhiteNoise for serving static files in production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # Must be placed before CommonMiddleware
     'django.middleware.common.CommonMiddleware',
@@ -125,15 +127,23 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings
-# Allow the local Next.js development server (localhost:3000)
+# Base origins allowed for local dev
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
 ]
 
-# Read production origin from environment if configured
+# Read production origins from environment (comma separated)
+cors_env = os.getenv('CORS_ALLOWED_ORIGINS')
+if cors_env:
+    for origin in cors_env.split(','):
+        cleaned = origin.strip()
+        if cleaned and cleaned not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(cleaned)
+
+# Legacy / single origin fallback
 CORS_PROD_ORIGIN = os.getenv('CORS_PROD_ORIGIN')
-if CORS_PROD_ORIGIN:
+if CORS_PROD_ORIGIN and CORS_PROD_ORIGIN not in CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS.append(CORS_PROD_ORIGIN)
 
 # Internationalization
@@ -143,14 +153,14 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Media files configuration (Uploaded images)
 # For local dev, files are stored locally under MEDIA_ROOT.
-# WARNING: Ephemeral hosting (Render, Heroku) will wipe local files on redeploy.
-# Production deployments should configure django-storages (e.g. S3 / Cloudinary).
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

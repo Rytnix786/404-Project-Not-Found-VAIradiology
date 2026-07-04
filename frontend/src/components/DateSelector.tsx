@@ -59,7 +59,7 @@ export default function DateSelector() {
 
       {/* Date display pill */}
       <div
-        className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-md)] transition-colors-fast"
+        className="relative flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-md)] transition-colors-fast"
         style={{
           background: 'var(--surface-raised)',
           border: '1px solid var(--border-default)',
@@ -83,6 +83,7 @@ export default function DateSelector() {
           tabIndex={-1}
         />
       </div>
+
 
       {/* Next day */}
       <button

@@ -5,12 +5,12 @@ import { AuthProvider } from "@/context/AuthContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
+  variable: "--font-sans",   // was --font-geist-sans; globals.css reads --font-sans
   weight: "100 900",
 });
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
+  variable: "--font-mono",   // was --font-geist-mono; globals.css reads --font-mono
   weight: "100 900",
 });
 

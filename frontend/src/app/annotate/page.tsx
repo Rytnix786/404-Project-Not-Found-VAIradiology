@@ -52,6 +52,9 @@ function AnnotatorWorkspace() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
+  // BUG-004 fix: inline confirmation instead of window.confirm()
+  const [pendingImageSwitch, setPendingImageSwitch] = useState<ImageAsset | null>(null);
+
   // Stage scaling references
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -59,7 +62,8 @@ function AnnotatorWorkspace() {
   const [imageLoadError, setImageLoadError] = useState(false);
 
   // Fetch images list on mount
-  const fetchImages = async (selectId?: number) => {
+  // BUG-006 fix: wrap in useCallback so the useEffect dep array is correct
+  const fetchImages = React.useCallback(async (selectId?: number) => {
     if (!token) return;
     setImagesLoading(true);
     try {
@@ -101,13 +105,13 @@ function AnnotatorWorkspace() {
     } finally {
       setImagesLoading(false);
     }
-  };
+  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (token) {
       fetchImages();
     }
-  }, [token]);
+  }, [token, fetchImages]);
 
   // Recalculate SVG stage overlay coordinate boundaries relative to actual image viewport
   const updateStageDimensions = () => {
@@ -129,13 +133,8 @@ function AnnotatorWorkspace() {
     };
   }, [selectedImage]);
 
-  // Handle selected image transition
-  const handleSelectImage = (img: ImageAsset) => {
-    if (hasUnsavedChanges) {
-      const confirmLeave = window.confirm('You have unsaved annotation changes. Do you want to switch images and discard them?');
-      if (!confirmLeave) return;
-    }
-    
+  // Commit the actual image switch (called after confirmation or directly if no unsaved changes)
+  const commitImageSwitch = (img: ImageAsset) => {
     setSelectedImage(img);
     setImageLoadError(false);
     setLocalShapes(img.shapes || []);
@@ -143,6 +142,17 @@ function AnnotatorWorkspace() {
     setSelectedShapeId(null);
     setHasUnsavedChanges(false);
     setSaveStatus('idle');
+    setPendingImageSwitch(null);
+  };
+
+  // Handle selected image transition — BUG-004 fix: no window.confirm()
+  const handleSelectImage = (img: ImageAsset) => {
+    if (hasUnsavedChanges) {
+      // Stage the pending switch; show inline confirmation banner
+      setPendingImageSwitch(img);
+      return;
+    }
+    commitImageSwitch(img);
   };
 
   // Upload file event handler
@@ -286,7 +296,9 @@ function AnnotatorWorkspace() {
         // Refresh image record from DB
         fetchImages(selectedImage?.id);
       } else {
-        alert('Failed to delete shape from backend.');
+        // BUG-005 fix: optimistic approach — restore on failure instead of alert()
+        setLocalShapes([...localShapes]); // restore full list
+        setSaveStatus('error');  // reuse saveStatus to show an error indicator
       }
     } catch (err) {
       console.error('Delete shape error', err);
@@ -485,6 +497,36 @@ function AnnotatorWorkspace() {
                 )}
               </div>
               
+              {/* BUG-004 fix: inline unsaved-changes confirmation — replaces window.confirm() */}
+              {pendingImageSwitch && (
+                <div
+                  className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-[var(--radius-md)] animate-fade-in"
+                  role="alertdialog"
+                  aria-live="assertive"
+                  style={{ background: 'var(--warn-surface)', border: '1px solid rgba(251,191,36,0.25)' }}
+                >
+                  <span className="text-xs" style={{ color: 'var(--warn)' }}>
+                    Unsaved shapes — switch image and discard?
+                  </span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => setPendingImageSwitch(null)}
+                      className="btn-ghost text-xs"
+                      style={{ padding: '0.125rem 0.5rem', height: '22px' }}
+                    >
+                      Keep editing
+                    </button>
+                    <button
+                      onClick={() => pendingImageSwitch && commitImageSwitch(pendingImageSwitch)}
+                      className="btn-primary text-xs"
+                      style={{ padding: '0.125rem 0.5rem', height: '22px', fontSize: '0.75rem' }}
+                    >
+                      Discard &amp; switch
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Mid-draw status bar */}
               {mode === 'draw' && newPoints.length > 0 && (
                 <div
@@ -507,6 +549,7 @@ function AnnotatorWorkspace() {
                   </button>
                 </div>
               )}
+
             </div>
           ) : (
             <div

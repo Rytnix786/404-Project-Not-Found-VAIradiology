@@ -1,0 +1,49 @@
+services:
+  # ── Backend Web Service (Django REST Framework) ─────────────────────────────
+  - type: web
+    name: v-radiology-backend
+    runtime: python
+    buildCommand: "cd backend && pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate && python manage.py seed_demo"
+    startCommand: "cd backend && gunicorn config.wsgi:application"
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: v-radiology-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: CORS_ALLOWED_ORIGINS
+        fromService:
+          type: web
+          name: v-radiology-frontend
+          property: url
+
+  # ── Frontend Web Service (Next.js 14) ───────────────────────────────────────
+  - type: web
+    name: v-radiology-frontend
+    runtime: node
+    buildCommand: "cd frontend && npm install && npm run build"
+    startCommand: "cd frontend && npm run start"
+    plan: free
+    envVars:
+      - key: NODE_VERSION
+        value: 20.0.0
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: v-radiology-backend
+          property: url
+
+# ── Render Managed PostgreSQL Database ────────────────────────────────────────
+databases:
+  - name: v-radiology-db
+    databaseName: vairadiology_db
+    user: vairadiology_user
+    plan: free

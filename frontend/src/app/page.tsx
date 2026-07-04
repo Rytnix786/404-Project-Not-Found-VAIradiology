@@ -1,10 +1,5 @@
 'use client';
 
-/* Hallmark · component: page · genre: modern-minimal · theme: obsidian-mono
- * states: default · hover · focus · active · disabled · loading · error · success
- * contrast: pass (46–50)
- */
-
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -18,7 +13,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export default function Home() {
   const { isAuthenticated, logout, user } = useAuth();
-  
+
   const [health, setHealth] = useState<'checking' | 'connected' | 'disconnected'>('checking');
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [pingTime, setPingTime] = useState<number | null>(null);
@@ -27,11 +22,8 @@ export default function Home() {
     setHealth('checking');
     const startTime = performance.now();
     try {
-      const res = await fetch(`${API_URL}/api/health/`, {
-        cache: 'no-store'
-      });
+      const res = await fetch(`${API_URL}/api/health/`, { cache: 'no-store' });
       const duration = Math.round(performance.now() - startTime);
-      
       if (res.ok) {
         const data = await res.json();
         setHealthData(data);
@@ -47,208 +39,238 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    checkHealth();
-  }, []);
+  useEffect(() => { checkHealth(); }, []);
+
+  const healthLabel =
+    health === 'checking'     ? 'Checking…' :
+    health === 'connected'    ? 'Connected' :
+                                'Unreachable';
+
+  const healthColor =
+    health === 'connected'    ? 'var(--positive)' :
+    health === 'checking'     ? 'var(--warn)' :
+                                'var(--danger)';
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col selection:bg-neutral-800 selection:text-neutral-200">
-      
-      {/* Top Navbar: N9 Edge-aligned minimal */}
-      <nav className="w-full border-b border-neutral-900 bg-neutral-950/80 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+    <div
+      className="min-h-dvh flex flex-col"
+      style={{ background: 'var(--surface-base)', color: 'var(--ink-primary)' }}
+    >
+      {/* ── Navbar ───────────────────────────────────────────────── */}
+      <nav
+        className="sticky top-0 z-40 flex items-center justify-between px-5 h-12"
+        style={{
+          background: 'rgba(13,13,15,0.85)',
+          borderBottom: '1px solid var(--border-subtle)',
+          backdropFilter: 'blur(12px)',
+        }}
+      >
         <div className="flex items-center gap-3">
-          <span className="font-mono text-base font-semibold tracking-tight text-neutral-100">
+          <span
+            className="font-data text-xs font-medium"
+            style={{ color: 'var(--ink-primary)', letterSpacing: '0.08em' }}
+          >
             404_PROJECT
           </span>
-          <span className="h-4 w-[1px] bg-neutral-800" />
-          <span className="text-xs font-mono text-neutral-500">v1.0.0</span>
+          <span style={{ width: '1px', height: '14px', background: 'var(--border-default)', display: 'inline-block' }} aria-hidden="true" />
+          <span className="font-data text-xs" style={{ color: 'var(--ink-tertiary)' }}>v1.0.0</span>
         </div>
 
-        <div className="flex items-center gap-6">
-          <Link 
-            href="/tasks" 
-            className="text-xs font-mono text-neutral-400 hover:text-neutral-200 transition-colors"
-          >
-            /tasks
-          </Link>
-          <Link 
-            href="/annotate" 
-            className="text-xs font-mono text-neutral-400 hover:text-neutral-200 transition-colors"
-          >
-            /annotate
-          </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/tasks" className="nav-link text-sm">Tasks</Link>
+          <Link href="/annotate" className="nav-link text-sm">Annotate</Link>
+          <div style={{ width: '1px', height: '14px', background: 'var(--border-default)' }} aria-hidden="true" />
           {isAuthenticated ? (
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-neutral-400 font-mono">
-                {user?.email}
-              </span>
-              <button
-                onClick={logout}
-                className="px-3 py-1.5 border border-neutral-800 hover:border-neutral-700 bg-neutral-900 text-neutral-300 rounded-md text-xs font-mono transition-colors cursor-pointer hover:bg-neutral-800"
-              >
-                Logout
-              </button>
+            <div className="flex items-center gap-3">
+              <span className="text-xs" style={{ color: 'var(--ink-tertiary)' }}>{user?.email}</span>
+              <button onClick={logout} className="btn-ghost text-xs py-1 px-3">Sign out</button>
             </div>
           ) : (
-            <Link
-              href="/login"
-              className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-950 rounded-md text-xs font-mono font-medium transition-colors"
-            >
-              Sign In
-            </Link>
+            <Link href="/login" className="btn-primary text-xs py-1.5 px-3">Sign in</Link>
           )}
         </div>
       </nav>
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-16 flex flex-col justify-center space-y-12">
-        
-        {/* Typographic Hero */}
-        <section className="space-y-4 text-left">
-          <h2 className="text-4xl font-light tracking-tight text-neutral-200 font-sans">
-            Take-Home <span className="font-mono font-semibold text-neutral-100">Workspace</span>
-          </h2>
-          <p className="text-neutral-400 max-w-xl text-base font-light leading-relaxed">
-            Welcome to the scaffolded monorepo dashboard. Confirm API connectivity, test the route middleware safeguards, and verify CORS below.
+      {/* ── Main ─────────────────────────────────────────────────── */}
+      <main className="flex-1 max-w-3xl w-full mx-auto px-5 py-14 flex flex-col gap-10">
+
+        {/* Hero — left-aligned, not centred */}
+        <section>
+          <h1
+            className="text-3xl font-semibold tracking-tight"
+            style={{ color: 'var(--ink-primary)', lineHeight: 1.2 }}
+          >
+            Take-Home Workspace
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)', maxWidth: '520px' }}>
+            Confirm API connectivity, test route middleware safeguards, and verify CORS configuration below.
           </p>
         </section>
 
-        {/* Health Check Dashboard Card */}
-        <section className="bg-neutral-900 border border-neutral-900 rounded-xl p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-[1px] bg-neutral-800" />
-          
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-1.5">
-              <h3 className="text-xs uppercase font-mono tracking-widest text-neutral-500">
-                Backend Connection Status
-              </h3>
-              <div className="flex items-center gap-3">
-                <span className={`relative flex h-2.5 w-2.5`}>
-                  {health === 'connected' && (
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  )}
-                  <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
-                    health === 'checking' 
-                      ? 'bg-amber-500' 
-                      : health === 'connected' 
-                      ? 'bg-emerald-500' 
-                      : 'bg-red-500'
-                  }`}></span>
-                </span>
-                <span className="text-lg font-medium tracking-tight text-neutral-200 font-mono">
-                  {health === 'checking' && 'Pinging Api...'}
-                  {health === 'connected' && 'Online'}
-                  {health === 'disconnected' && 'Unreachable'}
-                </span>
-              </div>
-            </div>
-
+        {/* Health check card */}
+        <section
+          className="card p-5"
+          aria-label="Backend connection status"
+        >
+          {/* Card header */}
+          <div
+            className="flex items-center justify-between pb-4"
+            style={{ borderBottom: '1px solid var(--border-subtle)' }}
+          >
             <div className="flex items-center gap-3">
-              <button
-                onClick={checkHealth}
-                disabled={health === 'checking'}
-                className="px-4 py-2 border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 text-neutral-300 hover:text-neutral-100 disabled:opacity-50 text-xs font-mono rounded-lg transition-all cursor-pointer"
+              {/* Status indicator */}
+              <span className="relative flex" style={{ width: '10px', height: '10px' }}>
+                {health === 'connected' && (
+                  <span
+                    className="animate-ping absolute inline-flex rounded-full"
+                    style={{ inset: 0, background: 'var(--positive)', opacity: 0.5 }}
+                  />
+                )}
+                <span
+                  className="relative inline-flex rounded-full"
+                  style={{ width: '10px', height: '10px', background: healthColor }}
+                />
+              </span>
+              <span className="text-sm font-medium" style={{ color: 'var(--ink-primary)' }}>
+                Backend connection
+              </span>
+              <span
+                className="badge"
+                style={{
+                  color: healthColor,
+                  background: health === 'connected' ? 'var(--positive-surface)' : health === 'checking' ? 'var(--warn-surface)' : 'var(--danger-surface)',
+                  border: `1px solid ${health === 'connected' ? 'rgba(52,211,153,0.2)' : health === 'checking' ? 'rgba(251,191,36,0.2)' : 'rgba(248,113,113,0.2)'}`,
+                }}
               >
-                Trigger Ping
-              </button>
+                {healthLabel}
+              </span>
             </div>
+            <button
+              onClick={checkHealth}
+              disabled={health === 'checking'}
+              className="btn-ghost text-xs disabled:opacity-50"
+              style={{ height: '28px', padding: '0 0.625rem' }}
+            >
+              Ping
+            </button>
           </div>
 
-          {/* Details Section */}
-          <div className="mt-6 pt-6 border-t border-neutral-950/60 font-mono text-xs text-neutral-400 space-y-2.5 bg-neutral-950/40 p-4 rounded-lg">
-            <div className="flex justify-between">
-              <span>ENDPOINT_URI:</span>
-              <span className="text-neutral-300">{API_URL}/api/health/</span>
+          {/* Diagnostics table */}
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-data" style={{ color: 'var(--ink-tertiary)' }}>ENDPOINT</span>
+              <span className="font-data" style={{ color: 'var(--ink-secondary)' }}>{API_URL}/api/health/</span>
             </div>
-            {health === 'connected' && (
+
+            {health === 'connected' && pingTime !== null && (
               <>
-                <div className="flex justify-between">
-                  <span>RESPONSE_TIME:</span>
-                  <span className="text-emerald-400">{pingTime}ms</span>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-data" style={{ color: 'var(--ink-tertiary)' }}>RESPONSE_TIME</span>
+                  <span className="font-data" style={{ color: 'var(--positive)' }}>{pingTime}ms</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>PAYLOAD:</span>
-                  <span className="text-neutral-300">{JSON.stringify(healthData)}</span>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-data" style={{ color: 'var(--ink-tertiary)' }}>PAYLOAD</span>
+                  <span className="font-data" style={{ color: 'var(--ink-secondary)' }}>{JSON.stringify(healthData)}</span>
                 </div>
               </>
             )}
-            {health === 'disconnected' && (
-              <div className="text-red-400 mt-2 text-xs leading-normal">
-                Could not connect to Django API. Make sure the backend server is running locally on port 8000 (`python manage.py runserver`) and that env files are properly defined.
+
+            {health === 'checking' && (
+              <div className="text-xs animate-pulse" style={{ color: 'var(--ink-muted)' }}>
+                Fetching diagnostics…
               </div>
             )}
-            {health === 'checking' && (
-              <div className="text-neutral-500 animate-pulse">
-                Fetching diagnostic information...
+
+            {health === 'disconnected' && (
+              <div
+                className="text-xs leading-relaxed mt-1"
+                style={{ color: 'var(--danger)' }}
+              >
+                Could not reach Django API at port 8000. Ensure the backend is running ({' '}
+                <code className="font-data">python manage.py runserver</code>
+                {' '}) and that <code className="font-data">.env.local</code> is configured correctly.
               </div>
             )}
           </div>
         </section>
 
-        {/* Feature Stubs and Middleware testing */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* Card 1: Tasks */}
-          <div className="bg-neutral-900/60 border border-neutral-900 rounded-xl p-6 hover:border-neutral-800 transition-all group">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-neutral-500">/tasks</span>
-                <span className="px-2 py-0.5 border border-red-950 text-red-400 bg-red-950/20 text-[10px] rounded uppercase font-mono tracking-wider">
-                  Secure Path
-                </span>
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-lg font-medium text-neutral-200 group-hover:text-neutral-100 transition-colors">
-                  Kanban Board
-                </h4>
-                <p className="text-xs text-neutral-400 leading-relaxed font-light">
-                  A date-bound task organizer with drag-and-drop mechanics. Guarded by cookies, middleware will redirect unauthenticated requests to login.
-                </p>
-              </div>
-              <Link
-                href="/tasks"
-                className="inline-flex items-center text-xs font-mono text-neutral-300 group-hover:text-neutral-100 transition-colors"
-              >
-                Access Tasks <span className="ml-1 group-hover:translate-x-0.5 transition-transform">→</span>
-              </Link>
+        {/* Feature cards */}
+        <section
+          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          aria-label="Application sections"
+        >
+          {/* Tasks card */}
+          <Link
+            href="/tasks"
+            className="card p-5 group block"
+            style={{ textDecoration: 'none', transition: 'border-color 120ms var(--ease-out)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--border-default)')}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = '')}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-data text-xs" style={{ color: 'var(--ink-tertiary)' }}>/tasks</span>
+              <span className="badge badge-danger">Secure</span>
             </div>
-          </div>
+            <h2 className="text-base font-semibold mb-1.5" style={{ color: 'var(--ink-primary)' }}>
+              Kanban Board
+            </h2>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+              Date-bound task organiser with drag-and-drop. Middleware redirects unauthenticated requests to login.
+            </p>
+            <span
+              className="inline-flex items-center gap-1 mt-4 text-sm font-medium"
+              style={{ color: 'var(--accent)', transition: 'gap 120ms var(--ease-out)' }}
+            >
+              Access Tasks
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+          </Link>
 
-          {/* Card 2: Annotate */}
-          <div className="bg-neutral-900/60 border border-neutral-900 rounded-xl p-6 hover:border-neutral-800 transition-all group">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-neutral-500">/annotate</span>
-                <span className="px-2 py-0.5 border border-red-950 text-red-400 bg-red-950/20 text-[10px] rounded uppercase font-mono tracking-wider">
-                  Secure Path
-                </span>
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-lg font-medium text-neutral-200 group-hover:text-neutral-100 transition-colors">
-                  Annotation Tool
-                </h4>
-                <p className="text-xs text-neutral-400 leading-relaxed font-light">
-                  Multi-image scroll slider supporting custom vector polygon drawings on uploaded frames. Guards require authenticated session credentials.
-                </p>
-              </div>
-              <Link
-                href="/annotate"
-                className="inline-flex items-center text-xs font-mono text-neutral-300 group-hover:text-neutral-100 transition-colors"
-              >
-                Access Annotator <span className="ml-1 group-hover:translate-x-0.5 transition-transform">→</span>
-              </Link>
+          {/* Annotate card */}
+          <Link
+            href="/annotate"
+            className="card p-5 group block"
+            style={{ textDecoration: 'none', transition: 'border-color 120ms var(--ease-out)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--border-default)')}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = '')}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-data text-xs" style={{ color: 'var(--ink-tertiary)' }}>/annotate</span>
+              <span className="badge badge-danger">Secure</span>
             </div>
-          </div>
+            <h2 className="text-base font-semibold mb-1.5" style={{ color: 'var(--ink-primary)' }}>
+              Annotation Tool
+            </h2>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-secondary)' }}>
+              Multi-image polygon drawing tool. Upload frames and draw vector shapes stored with normalised coordinates.
+            </p>
+            <span
+              className="inline-flex items-center gap-1 mt-4 text-sm font-medium"
+              style={{ color: 'var(--accent)', transition: 'gap 120ms var(--ease-out)' }}
+            >
+              Access Annotator
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+          </Link>
         </section>
 
       </main>
 
-      {/* Footer: Ft2 Inline single line */}
-      <footer className="w-full border-t border-neutral-900 bg-neutral-950 py-6 px-6 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs text-neutral-500">
-        <span>&copy; 2026 404_PROJECT. Monorepo scaffold.</span>
-        <div className="flex gap-6">
-          <a href="#" className="hover:text-neutral-400 transition-colors">BACKEND: DRF + SQLite</a>
-          <a href="#" className="hover:text-neutral-400 transition-colors">FRONTEND: Next.js 14</a>
+      {/* ── Footer ───────────────────────────────────────────────── */}
+      <footer
+        className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-5"
+        style={{ borderTop: '1px solid var(--border-subtle)' }}
+      >
+        <span className="font-data text-xs" style={{ color: 'var(--ink-muted)' }}>
+          © 2026 404_PROJECT
+        </span>
+        <div className="flex gap-5">
+          <span className="font-data text-xs" style={{ color: 'var(--ink-muted)' }}>Backend: DRF + SQLite</span>
+          <span className="font-data text-xs" style={{ color: 'var(--ink-muted)' }}>Frontend: Next.js 14</span>
         </div>
       </footer>
     </div>
