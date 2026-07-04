@@ -120,6 +120,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
 }
 
 # CORS settings
@@ -145,3 +147,10 @@ STATIC_URL = 'static/'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Media files configuration (Uploaded images)
+# For local dev, files are stored locally under MEDIA_ROOT.
+# WARNING: Ephemeral hosting (Render, Heroku) will wipe local files on redeploy.
+# Production deployments should configure django-storages (e.g. S3 / Cloudinary).
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
