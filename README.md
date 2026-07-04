@@ -293,8 +293,8 @@ The application is deployed on **Render** using a `render.yaml` Blueprint file.
 
 ## 9. Production Links & Demo Credentials
 
-- **Frontend Application**: [https://v-radiology-frontend.onrender.com](https://v-radiology-frontend.onrender.com)
-- **Backend REST API**: [https://v-radiology-backend.onrender.com](https://v-radiology-backend.onrender.com)
+- **Production Live Application**: [https://four04-project-not-found-vairadiology.onrender.com](https://four04-project-not-found-vairadiology.onrender.com)
+- **Backend API Health Check**: [https://four04-project-not-found-vairadiology.onrender.com/api/health/](https://four04-project-not-found-vairadiology.onrender.com/api/health/)
 - **GitHub Repository**: [https://github.com/Rytnix786/404-Project-Not-Found-VAIradiology.git](https://github.com/Rytnix786/404-Project-Not-Found-VAIradiology.git)
 - **Demo User Email**: `demo@404.com`
 - **Demo User Password**: `password123`
