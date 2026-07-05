@@ -60,6 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
     try {
       const res = await fetch(`${API_URL}/api/auth/login/`, {
         method: 'POST',
@@ -67,8 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        signal: controller.signal,
       });
       
+      clearTimeout(timeoutId);
       const data = await res.json();
       
       if (res.ok) {
@@ -81,7 +86,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const errorMsg = data.non_field_errors?.[0] || 'Login failed. Please check your credentials.';
         return { success: false, error: errorMsg };
       }
-    } catch {
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === 'AbortError') {
+        return { success: false, error: 'Server took too long to respond. Please try signing in again.' };
+      }
       return { success: false, error: 'Cannot connect to the server.' };
     }
   };
