@@ -54,8 +54,9 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # Delete user's active token from the database
-        request.user.auth_token.delete()
+        # Delete user's active token safely from database
+        from rest_framework.authtoken.models import Token
+        Token.objects.filter(user=request.user).delete()
         return Response({
             "message": "Successfully logged out."
         }, status=status.HTTP_200_OK)

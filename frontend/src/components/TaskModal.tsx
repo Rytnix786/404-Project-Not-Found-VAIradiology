@@ -46,8 +46,14 @@ export default function TaskModal({
         setTagsInput('');
       }
       setError(null);
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isOpen, task, defaultStatus, defaultDueDate]);
+  }, [isOpen, task, defaultStatus, defaultDueDate, onClose]);
 
   if (!isOpen) return null;
 

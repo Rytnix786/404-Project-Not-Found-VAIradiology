@@ -74,6 +74,24 @@ class ImageSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'original_width', 'original_height', 'uploaded_by', 'uploaded_at', 'shapes')
 
+    def validate_file(self, value):
+        """
+        Hardened file upload security: validate image extension and file size limit.
+        """
+        import os
+        ext = os.path.splitext(value.name)[1].lower()
+        valid_extensions = ['.png', '.jpg', '.jpeg', '.webp', '.bmp', '.tiff']
+        if ext not in valid_extensions:
+            raise serializers.ValidationError(
+                f"Unsupported file extension '{ext}'. Allowed extensions: {', '.join(valid_extensions)}"
+            )
+        
+        max_size = 10 * 1024 * 1024  # 10MB max limit
+        if value.size > max_size:
+            raise serializers.ValidationError("File size exceeds maximum limit of 10MB.")
+            
+        return value
+
     def create(self, validated_data):
         # Auto-assign the requesting user as the uploader
         validated_data['uploaded_by'] = self.context['request'].user

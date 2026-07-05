@@ -43,6 +43,19 @@ export default function DateSelector() {
     });
   })();
 
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const handlePillClick = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    const pickerFn = (el as HTMLInputElement & { showPicker?: () => void }).showPicker;
+    if (typeof pickerFn === 'function') {
+      pickerFn.call(el);
+    } else {
+      el.click();
+    }
+  };
+
   return (
     <div className="flex items-center gap-1.5">
       {/* Prev day */}
@@ -59,7 +72,8 @@ export default function DateSelector() {
 
       {/* Date display pill */}
       <div
-        className="relative flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-md)] transition-colors-fast"
+        onClick={handlePillClick}
+        className="relative flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-md)] transition-colors-fast cursor-pointer hover:border-[var(--border-strong)]"
         style={{
           background: 'var(--surface-raised)',
           border: '1px solid var(--border-default)',
@@ -75,6 +89,7 @@ export default function DateSelector() {
         </span>
         {/* Hidden native date input for direct picker access */}
         <input
+          ref={inputRef}
           type="date"
           value={selectedDate}
           onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
