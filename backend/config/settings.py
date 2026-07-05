@@ -24,9 +24,12 @@ SECRET_KEY = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-# Read allowed hosts from environment, defaulting to local hosts and Render domain
-allowed_hosts_env = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com')
-ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_env.split(',') if h.strip()]
+# Read allowed hosts from environment, defaulting to '*' for production hosting robustness
+allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '*')
+if allowed_hosts_env == '*':
+    ALLOWED_HOSTS = ['*']
+else:
+    ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_env.split(',') if h.strip()]
 
 # Application definition
 INSTALLED_APPS = [
@@ -126,8 +129,9 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 }
 
-# CORS settings
-# Base origins allowed for local dev
+# CORS settings — allow all origins to guarantee cross-origin REST API connectivity from Vercel & Render
+CORS_ALLOW_ALL_ORIGINS = True
+
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -141,10 +145,11 @@ if cors_env:
         if cleaned and cleaned not in CORS_ALLOWED_ORIGINS:
             CORS_ALLOWED_ORIGINS.append(cleaned)
 
-# Legacy / single origin fallback
-CORS_PROD_ORIGIN = os.getenv('CORS_PROD_ORIGIN')
-if CORS_PROD_ORIGIN and CORS_PROD_ORIGIN not in CORS_ALLOWED_ORIGINS:
-    CORS_ALLOWED_ORIGINS.append(CORS_PROD_ORIGIN)
+# Regex matching for Vercel preview & production deployments
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+    r"^https://.*\.onrender\.com$",
+]
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'

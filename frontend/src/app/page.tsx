@@ -18,25 +18,31 @@ export default function Home() {
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [pingTime, setPingTime] = useState<number | null>(null);
 
-  const checkHealth = async () => {
+  const checkHealth = async (retries = 2) => {
     setHealth('checking');
     const startTime = performance.now();
-    try {
-      const res = await fetch(`${API_URL}/api/health/`, { cache: 'no-store' });
-      const duration = Math.round(performance.now() - startTime);
-      if (res.ok) {
-        const data = await res.json();
-        setHealthData(data);
-        setPingTime(duration);
-        setHealth('connected');
-      } else {
-        setHealth('disconnected');
-        setHealthData(null);
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const res = await fetch(`${API_URL}/api/health/`, { cache: 'no-store' });
+        const duration = Math.round(performance.now() - startTime);
+        if (res.ok) {
+          const data = await res.json();
+          setHealthData(data);
+          setPingTime(duration);
+          setHealth('connected');
+          return;
+        }
+      } catch {
+        if (attempt < retries) {
+          // Render free tier cold start delay — wait 2.5s and retry
+          await new Promise(resolve => setTimeout(resolve, 2500));
+        }
       }
-    } catch {
-      setHealth('disconnected');
-      setHealthData(null);
     }
+
+    setHealth('disconnected');
+    setHealthData(null);
   };
 
   useEffect(() => { checkHealth(); }, []);
@@ -146,7 +152,7 @@ export default function Home() {
               </span>
             </div>
             <button
-              onClick={checkHealth}
+              onClick={() => checkHealth(2)}
               disabled={health === 'checking'}
               className="btn-ghost text-xs disabled:opacity-50"
               style={{ height: '28px', padding: '0 0.625rem' }}
