@@ -2,14 +2,13 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 function LoginForm() {
   const { login, isAuthenticated, loading: authLoading } = useAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/tasks';
 
@@ -28,9 +27,9 @@ function LoginForm() {
 
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
-      router.replace(redirectPath);
+      window.location.href = redirectPath;
     }
-  }, [isAuthenticated, authLoading, router, redirectPath]);
+  }, [isAuthenticated, authLoading, redirectPath]);
 
   // Handle cold-start status indicator when login takes longer than 2.5s
   useEffect(() => {
@@ -59,8 +58,8 @@ function LoginForm() {
       if (result.success) {
         setStatus('success');
         setTimeout(() => {
-          router.replace(redirectPath);
-        }, 400);
+          window.location.href = redirectPath;
+        }, 300);
       } else {
         setStatus('error');
         setErrorMessage(result.error || 'Invalid email or password.');
